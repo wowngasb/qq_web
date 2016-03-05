@@ -1,0 +1,108 @@
+$def with(input, json_data)
+$var title:QQ昵称查找
+<div class="body">
+    <dl>
+        <dt><div id="react_nick_title" class="group-tit"></div></dt>
+        <dd>
+            <div class="group-tools">
+                <div id="react_nick_info"></div>
+                <div class="group-search">
+                    <div class="group-input">
+	                    <input type="text" id="searchValue" data-def="搜索关键词" value="">
+					</div>
+					<button data-tag="search" onclick="gopage('nick');">搜索</button>
+				</div>
+            </div>
+            <div class="group-memeber" id="react_members_list"></div>
+        </dd>
+    </dl>
+</div>
+<script type="text/javascript">
+	function gopage(index) {
+		if (document.getElementById('searchValue').value){
+			location.href='/'+index+'/'+document.getElementById('searchValue').value+'.html';
+		}
+	}
+	var nick = "$:(input)";
+	var nickinfo = $:(json_data);
+</script>
+<script type="text/babel">
+      var NickTitle = React.createClass({
+        render: function() {
+          return <span id="groupTit">昵称：{this.props.nick}</span>;
+        }
+      });
+
+      ReactDOM.render(
+        <NickTitle nick={nick} />,
+        document.getElementById('react_nick_title')
+      );
+
+      var NickInfo = React.createClass({
+        render: function() {
+          return (<div class="group-members" id="groupMemberTit">
+          			信息条数:<span id="groupMemberNum">{this.props.info.length}</span></div>);
+        }
+      });
+
+      ReactDOM.render(
+        <NickInfo info={nickinfo}/>,
+        document.getElementById('react_nick_info')
+      );
+
+	var MembersList = React.createClass({
+	    render:function(){
+	        return (<div>
+	        		<dl class="group-tit">
+						        <dt><p>&nbsp;</p><p>&nbsp;</p></dt>
+						        <dt><a href={this.props.members[0]["QQUrl"]} target="_top"><span id="groupTit">QQ号码：{this.props.members[0]['QQNum']}</span></a><br/>条数:<span id="groupMemberNum">{this.props.members.length}</span></dt>
+          			</dl>
+					<table cellspacing="0" cellpadding="0" border="0" width="100%" id="groupMember" align="center">
+						<tbody>
+							<tr>
+								<th width="100" class="th-left th-card">群号</th>
+								<th class="th-left th-card" width="100">群信息</th>
+								<th class="th-left th-card" width="160">群名片</th>
+								<th class="th-left" width="100">QQ号</th>
+								<th class="th-left" width="90">性别</th>
+								<th class="th-left" width="90">年龄</th>
+								<th class="th-left" width="90">权限</th>
+							</tr>
+						</tbody>
+                        <tbody class="list">{
+	                    this.props.members.map(function (item) {
+	                        return <tr key={item["QunNum"]}>
+	                        	<td class="td-no"><a href={item["QunUrl"]} target="_top">{item["QunNum"]}</a></td>
+	                        	<td class="td-no"><strong>{item["Title"]}</strong>[{item["CreateDate"]}]&nbsp;[{item["QunText"]}]</td>
+		                        <td class="td-user-nick"><span>{item["Nick"]}</span></td>
+		                        <td><a href={item["QQUrl"]} target="_top">{item["QQNum"]}</a></td>
+		                        <td>{item["Gender"]}</td>
+		                        <td>{item["Age"]}</td>
+		                        <td>{item["Auth"]}</td>
+	                        </tr>
+	                    	})
+		                }</tbody>
+	                </table></div>)
+	    }
+	})
+
+	var AllMembersList = React.createClass({
+	    render:function(){
+	        return (<dl>{
+	                    this.props.allmembers.map(function (item) {
+	                        return <div key={item[0]["QQNum"]}>
+	                        <MembersList members={item}/>
+	                        
+	                        </div>
+	                    	})
+	        }
+	        </dl>)
+        }
+    })
+	        
+	ReactDOM.render(
+		<AllMembersList allmembers={nickinfo} />,
+		document.getElementById('react_members_list')
+		); 
+
+</script>

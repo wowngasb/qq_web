@@ -1,0 +1,93 @@
+$def with(input, json_data)
+$var title:QQ群成员信息
+<div class="body">
+    <dl>
+        <dt><div id="react_qun_title" class="group-tit"></div></dt>
+        <dd>
+            <div class="group-tools">
+                <div id="react_qun_info"></div>
+                <div class="group-search">
+                    <div class="group-input">
+	                    <input type="text" id="searchValue" data-def="搜索关键词" value="">
+					</div>
+					<button data-tag="search" onclick="gopage('qun');">搜索</button>
+				</div>
+            </div>
+            <div class="group-memeber" id="react_members_list"></div>
+        </dd>
+    </dl>
+</div>
+<script type="text/javascript">
+	function gopage(index) {
+		if (document.getElementById('searchValue').value){
+			location.href='/'+index+'/'+document.getElementById('searchValue').value+'.html';
+		}
+	}
+	var qun_num = $:(input);
+    var quninfo = $:(json_data);
+</script>
+<script type="text/babel">
+      var QunTitle = React.createClass({
+        render: function() {
+          return <span id="groupTit">{this.props.info["Title"]}({this.props.info["QunNum"]})</span>;
+        }
+      });
+
+      ReactDOM.render(
+        <QunTitle info={quninfo} />,
+        document.getElementById('react_qun_title')
+      );
+
+      var QunInfo = React.createClass({
+        render: function() {
+          return <div class="group-members" id="groupMemberTit">
+          <span >{this.props.info["QunText"]}</span><br/>
+          群成员人数:<span id="groupMemberNum">{this.props.info["Members"].length}</span>&nbsp;&nbsp;
+          建立时间:<span>{this.props.info["CreateDate"]}</span>&nbsp;&nbsp;
+          MastQQ:<span>{this.props.info["MastQQ"]}</span>&nbsp;&nbsp;
+          Class:<span>{this.props.info["Class"]}</span>
+                 </div>;
+        }
+      });
+
+      ReactDOM.render(
+        <QunInfo info={quninfo}/>,
+        document.getElementById('react_qun_info')
+      );
+
+
+	var MembersList = React.createClass({
+	    render:function(){
+	        return (
+					<table cellspacing="0" cellpadding="0" border="0" width="100%" id="groupMember" align="center">
+						<tbody>
+							<tr>
+								<th width="100" class="th-left th-card">序号</th>
+								<th class="th-left th-card" width="160">群名片</th>
+								<th class="th-left" width="100">QQ号</th>
+								<th class="th-left" width="90">性别</th>
+								<th class="th-left" width="90">年龄</th>
+								<th class="th-left" width="90">权限</th>
+							</tr>
+						</tbody>
+                        <tbody class="list">{
+	                    this.props.members.map(function (item) {
+	                        return <tr key={item["QQNum"]}>
+	                        	<td class="td-no">{item["Index"]}</td>
+		                        <td class="td-user-nick"><span>{item["Nick"]}</span></td>
+		                        <td><a href={item["QQUrl"]} target="_top">{item["QQNum"]}</a></td>
+		                        <td>{item["Gender"]}</td>
+		                        <td>{item["Age"]}</td>
+		                        <td>{item["Auth"]}</td>
+	                        </tr>
+	                    	})
+		                }</tbody>
+	                </table>)
+	    }
+	})
+
+	ReactDOM.render(
+		<MembersList members={quninfo["Members"]} />,
+		document.getElementById('react_members_list')
+		);                       
+</script>
