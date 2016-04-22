@@ -26,7 +26,7 @@ class Pageqq:
             return PAGE.Pageqq(qq, [])
 
         if not qq.isdigit():
-            return NOT_FOUND('bad qq num:%r.' % (qq,))
+            raise NOT_FOUND('bad qq num:%r.' % (qq,))
         qq = int(qq)
         qqinfo_list = API.qqinfo(qq)
         for item in qqinfo_list:
@@ -40,7 +40,7 @@ class Pagequn:
             return PAGE.Pagequn(qun, [])
 
         if not qun.isdigit():
-            return NOT_FOUND('bad qun num:%r.' % (qun,))
+            raise NOT_FOUND('bad qun num:%r.' % (qun,))
         qun = int(qun)
         quninfo_dict = API.quninfo(qun)
         quninfo_dict['Members'] = API.qunmembers(qun)
@@ -54,7 +54,7 @@ class Pagenick:
             return PAGE.Pagenick(nick, [])
 
         if not isinstance(nick, unicode) or len(nick)>=6:
-            return NOT_FOUND('bad nick str:%r.' % (nick,))
+            raise NOT_FOUND('bad nick str:%r.' % (nick,))
 
         qq_list = API.nickqqs(nick)
         qqinfo_dict = API.qqinfo_ex(set(qq_list))
@@ -74,7 +74,7 @@ class Apijson:
         func = getattr(API, api.func, API.apihelp)
 
         if not getattr(func, 'is_api', False):
-            return NOT_FOUND("404 Run Error:%r." % ('bad func name',))
+            raise NOT_FOUND("404 Run Error:%r." % ('bad func name',))
 
         try:
             args = func.args_parser(api.args, api)
@@ -85,7 +85,7 @@ class Apijson:
             json_str = json.dumps(result, indent=indent)
             return json_str if not api.callback else '%s(%s);' % (api.callback, json_str)
         except Exception as ex:
-            return NOT_FOUND("404 Run Error:%r." % (ex,))
+            raise NOT_FOUND("404 Run Error:%r." % (ex,))
 
 
 
