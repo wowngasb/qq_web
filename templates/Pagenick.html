@@ -145,7 +145,7 @@ $var title:QQ昵称查找
         render:function(){
             return (
                 <dl className="group-memeber">{
-                    Object.keys(this.props.allmembers).map((function(key) {
+                    Object.keys(this.props.allmembers).sort().map((function(key) {
                         var item = this.props.allmembers[ key ]
                         return (
                             <div key={key}>
@@ -192,7 +192,7 @@ $var title:QQ昵称查找
                         }).bind(this)
                     });
                 }
-            }.bind(this), 2000)
+            }.bind(this), 1000)
         },
         render: function() {
             return (
