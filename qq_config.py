@@ -16,15 +16,15 @@ from api_tool import Config
 _CONF = {
     'db': {
         'dbn': 'mysql',
-        'host': '192.168.71.130',
+        'host': '192.168.0.109',
         'user': 'admin',
-        'pw': 'admin',
+        'pw': 'qwezxc345',
         'db': 'QQinfo',
         'port':3306,
         'charset': 'utf8'
     },
     'mongodb': {
-        'host': '192.168.71.130',
+        'host': '192.168.0.109',
         'port': 27017
     },
 }

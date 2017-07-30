@@ -1,93 +1,140 @@
 $def with(input, json_data)
 $var title:QQ群成员信息
-<div class="body">
-    <dl>
-        <dt><div id="react_qun_title" class="group-tit"></div></dt>
-        <dd>
-            <div class="group-tools">
-                <div id="react_qun_info"></div>
-                <div class="group-search">
-                    <div class="group-input">
-	                    <input type="text" id="searchValue" data-def="搜索关键词" value="">
-					</div>
-					<button data-tag="search" onclick="gopage('qun');">搜索</button>
-				</div>
-            </div>
-            <div class="group-memeber" id="react_members_list"></div>
-        </dd>
-    </dl>
-</div>
+<div class="body" id="react-app"></div>
 <script type="text/javascript">
-	function gopage(index) {
-		if (document.getElementById('searchValue').value){
-			location.href='/'+index+'/'+document.getElementById('searchValue').value+'.html';
-		}
-	}
-	var qun_num = $:(input);
-    var quninfo = $:(json_data);
+    var _QUN_NUM = $:(input);
+    var _QUN_INFO = $:(json_data);
 </script>
 <script type="text/babel">
-      var QunTitle = React.createClass({
+    var QunTitle = React.createClass({
         render: function() {
-          return <span id="groupTit">{this.props.info["Title"]}({this.props.info["QunNum"]})</span>;
+            return  (
+                <div className="group-tit">
+                    <span>QQ群 : {this.props.title ? this.props.title : '未找到！'}({this.props.qun})</span>
+                    
+                </div>
+            )
         }
-      });
+    })
 
-      ReactDOM.render(
-        <QunTitle info={quninfo} />,
-        document.getElementById('react_qun_title')
-      );
-
-      var QunInfo = React.createClass({
+    var QunInfo = React.createClass({
         render: function() {
-          return <div class="group-members" id="groupMemberTit">
-          <span >{this.props.info["QunText"]}</span><br/>
-          群成员人数:<span id="groupMemberNum">{this.props.info["Members"].length}</span>&nbsp;&nbsp;
-          建立时间:<span>{this.props.info["CreateDate"]}</span>&nbsp;&nbsp;
-          MastQQ:<span>{this.props.info["MastQQ"]}</span>&nbsp;&nbsp;
-          Class:<span>{this.props.info["Class"]}</span>
-                 </div>;
+            return (
+                <div className="group-members">
+                    <p>
+                        {this.props.info["QunText"]}
+                    </p>
+                    <span>
+                        群成员人数 : {this.props.info["Members"].length}
+                    </span>
+                    <span style={{marginLeft: 20 + 'px'}}>
+                        建立时间:{this.props.info["CreateDate"]}
+                    </span>  
+                    <span style={{marginLeft: 20 + 'px'}}>
+                        MastQQ : {this.props.info["MastQQ"]}
+                    </span>  
+                    <span style={{marginLeft: 20 + 'px'}}>
+                        Class : {this.props.info["Class"]}
+                    </span>
+                </div>
+            )
         }
-      });
+      })
 
-      ReactDOM.render(
-        <QunInfo info={quninfo}/>,
-        document.getElementById('react_qun_info')
-      );
+    var QunSearch = React.createClass({
+        getInitialState: function() {
+            return {
+                qun: ""
+            }
+        },
+        searchQunClick: function(event) {
+            if(this.state.qun){
+                location.href = '/qun/' + this.state.qun + '.html'
+            }
+        },
+        searchQunChange: function(event) {
+            if(parseInt(event.target.value)){
+                this.setState({
+                    qun: parseInt(event.target.value)
+                })
+            }
+        },
+        render: function() {
+            return (
+                <div className="group-search">
+                    <div className="group-input">
+                        <input type="text" placeholder="搜索QQ群号码" value={this.state.qun} onChange={this.searchQunChange} />
+                    </div>
+                    <button className="search-btn" onClick={this.searchQunClick}>搜索</button>
+                </div>
+            )
+        }
+    })
+    
+    var QunGroupTools = React.createClass({
+        render: function() {
+            return (
+                <div className="group-tools">
+                    <QunInfo info={this.props.info} />
+                    <QunSearch />
+                </div>
+            )
+        }
+    })
 
+    var QunMembersList = React.createClass({
+        render:function(){
+            return (
+                <div className="group-memeber">
+                    <table cellSpacing="0" cellPadding="0" border="0" width="100%" align="center">
+                        <thead>
+                            <tr>
+                                <th className="th-left th-card" width="100" >序号</th>
+                                <th className="th-left th-card" width="160">群名片</th>
+                                <th className="th-left" width="100">QQ号</th>
+                                <th className="th-left" width="90">性别</th>
+                                <th className="th-left" width="90">年龄</th>
+                                <th className="th-left" width="90">权限</th>
+                            </tr>
+                        </thead>
+                        <tbody className="list">{
+                            this.props.members.map(function (item) {
+                            return (
+                                <tr key={item["QQNum"]}>
+                                    <td className="td-no">{item["Index"]}</td>
+                                    <td className="td-user-nick"><span>{item["Nick"]}</span></td>
+                                    <td><a href={'/qq/' + item["QQNum"] + '.html'} >{item["QQNum"]}</a></td>
+                                    <td>{item["Gender"]}</td>
+                                    <td>{item["Age"]}</td>
+                                    <td>{item["Auth"]}</td>
+                                </tr>
+                            )
+                            })
+                        }</tbody>
+                    </table>
+                </div>
+            )
+        }
+    })
+    
+    var App = React.createClass({
+        render: function() {
+            return (
+                <dl>
+                    <dt>
+                        <QunTitle title={this.props.info['Title']} qun={this.props.qun}/>
+                    </dt>
+                    <dd>
+                        <QunGroupTools info={this.props.info}/>
+                        <QunMembersList members={this.props.info['Members']}/>
+                    </dd>
+                </dl>
+            )
+        }
+    })
 
-	var MembersList = React.createClass({
-	    render:function(){
-	        return (
-					<table cellspacing="0" cellpadding="0" border="0" width="100%" id="groupMember" align="center">
-						<tbody>
-							<tr>
-								<th width="100" class="th-left th-card">序号</th>
-								<th class="th-left th-card" width="160">群名片</th>
-								<th class="th-left" width="100">QQ号</th>
-								<th class="th-left" width="90">性别</th>
-								<th class="th-left" width="90">年龄</th>
-								<th class="th-left" width="90">权限</th>
-							</tr>
-						</tbody>
-                        <tbody class="list">{
-	                    this.props.members.map(function (item) {
-	                        return <tr key={item["QQNum"]}>
-	                        	<td class="td-no">{item["Index"]}</td>
-		                        <td class="td-user-nick"><span>{item["Nick"]}</span></td>
-		                        <td><a href={item["QQUrl"]} target="_top">{item["QQNum"]}</a></td>
-		                        <td>{item["Gender"]}</td>
-		                        <td>{item["Age"]}</td>
-		                        <td>{item["Auth"]}</td>
-	                        </tr>
-	                    	})
-		                }</tbody>
-	                </table>)
-	    }
-	})
-
-	ReactDOM.render(
-		<MembersList members={quninfo["Members"]} />,
-		document.getElementById('react_members_list')
-		);                       
+    ReactDOM.render(
+        <App qun={_QUN_NUM} info={_QUN_INFO} />,
+        document.getElementById('react-app')
+    )
 </script>

@@ -3,6 +3,8 @@ import json
 import web
 import qq_api as API
 
+web.config.debug = False
+
 urls = (
     '/api', 'Apijson',
     '/qq/(.*).html', 'Pageqq',
@@ -15,54 +17,58 @@ urls = (
     '/(.*)', 'Home',
 )
 
-NOT_FOUND = lambda msg: msg if web.notfound(msg) else "404 Page Not Found!"
+NOT_FOUND = lambda msg: web.notfound(msg) if msg else web.HTTPError("404 Page Not Found!")
 
 
 PAGE = web.template.render("templates", base="layout")
 
 class Pageqq:
     def GET(self, qq='index'):
+        qq = qq if qq else 'index'
         if qq=='index':
-            return PAGE.Pageqq(qq, [])
+            return PAGE.Pageqq(0, [])
 
         if not qq.isdigit():
             raise NOT_FOUND('bad qq num:%r.' % (qq,))
         qq = int(qq)
         qqinfo_list = API.qqinfo(qq)
-        for item in qqinfo_list:
-            item['QQUrl'] = '/qq/%s.html' % (item['QQNum'],)
-            item['QunUrl'] = '/qun/%s.html' % (item['QunNum'],)
+
         return PAGE.Pageqq(qq, json.dumps(qqinfo_list))
 
 class Pagequn:
     def GET(self, qun='index'):
+        qun = qun if qun else 'index'
         if qun=='index':
-            return PAGE.Pagequn(qun, [])
+            return PAGE.Pagequn(0, [])
 
         if not qun.isdigit():
             raise NOT_FOUND('bad qun num:%r.' % (qun,))
         qun = int(qun)
         quninfo_dict = API.quninfo(qun)
         quninfo_dict['Members'] = API.qunmembers(qun)
-        for item in quninfo_dict['Members']:
-            item['QQUrl'] = '/qq/%s.html' % (item['QQNum'],)
+
         return PAGE.Pagequn(qun, json.dumps(quninfo_dict))
 
 class Pagenick:
     def GET(self, nick='index'):
+        nick = nick if nick else 'index'
         if nick=='index':
-            return PAGE.Pagenick(nick, [])
+            return PAGE.Pagenick('', [])
 
-        if not isinstance(nick, unicode) or len(nick)>=6:
+        if not isinstance(nick, unicode):
             raise NOT_FOUND('bad nick str:%r.' % (nick,))
+        nick_list = nick.split()
+        qq_list = set()
+        for _nick in nick_list:
+            _qq_list = set(API.nickqqs(_nick))
+            qq_list = _qq_list if not qq_list else qq_list.intersection(_qq_list)
 
-        qq_list = API.nickqqs(nick)
-        qqinfo_dict = API.qqinfo_ex(set(qq_list))
-        for _, qqinfo_list in qqinfo_dict.items():
-            for item in qqinfo_list:
-                item['QQUrl'] = '/qq/%s.html' % (item['QQNum'],)
-                item['QunUrl'] = '/qun/%s.html' % (item['QunNum'],)
-        return PAGE.Pagenick(nick, json.dumps(qqinfo_dict.values()))
+        qqinfo_dict = API.qqinfo_ex(qq_list)
+        nick_info = {
+            'Qqlist': list(qq_list),
+            'QunList': dict(qqinfo_dict),
+        }
+        return PAGE.Pagenick(nick, json.dumps(nick_info))
 
 class Home:
     def GET(self, args=None):
@@ -71,6 +77,7 @@ class Home:
 class Apijson:
     def GET(self):
         api = web.input(func="apihelp", args='', indent='', callback='')
+        api = api if api else 'apihelp'
         func = getattr(API, api.func, API.apihelp)
 
         if not getattr(func, 'is_api', False):
@@ -95,5 +102,5 @@ class StaticFile:
 
 
 if __name__ == "__main__":
-    app = web.application(urls, globals())
+    app = web.application(urls, globals(), autoreload=True)
     app.run()

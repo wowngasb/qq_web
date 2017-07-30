@@ -17,13 +17,23 @@ from qq_config import config
 MYSQL_DB = config.MYSQL_DB
 MONGO_CONN = config.MONGO_CONN
 
-SQL_IN_BLOCK_MAX_ITEM = 500
-CACHE_ITEM_NUM = 1000
-AW_NONE = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:None), lambda args_str, web_input: None)
-AW_INT = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:argsl[0] if argsl else 0), lambda args_str, web_input: int(args_str) if args_str.isdigit() else None)
-AW_INT_LIST = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:tuple(sorted(list(argsl[0]))) ), lambda args_str, web_input: [int(si) for si in args_str.split(',') if si.isdigit()])
-AW_STR = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:argsl[0] if argsl else ''), lambda args_str, web_input: args_str.strip())
-AW_STR_LIST = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:tuple(sorted(list(argsl[0]))) ), lambda args_str, web_input: [si.strip() for si in args_str.split(',') if si])
+import hashlib
+
+def _md5(src):
+    m2 = hashlib.md5()
+    m2.update(src)
+    return m2.hexdigest()
+
+_hash_int_list = lambda l: _md5(','.join(['%d' % (d, ) for d in sorted(list(l))]))
+_hash_str_list = lambda l: _md5(','.join([s for s in sorted(list(l))]))
+
+SQL_IN_BLOCK_MAX_ITEM = 20
+CACHE_ITEM_NUM = 100000
+AW_NONE = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:''), lambda args_str, web_input: None )
+AW_INT = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:argsl[0] if argsl else 0), lambda args_str, web_input: int(args_str) if args_str.isdigit() else None )
+AW_INT_SET = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds: _hash_int_list(argsl[0]) ), lambda args_str, web_input: set([int(si) for si in args_str.split(',') if si.isdigit()]) )
+AW_STR = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds: _md5(argsl[0]) if argsl else ''), lambda args_str, web_input: args_str.strip() )
+AW_STR_SET = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds: _hash_str_list(argsl[0]) ), lambda args_str, web_input: set([si.strip() for si in args_str.split(',') if si]) )
 
 
 def fix(item):
@@ -72,7 +82,7 @@ def nickqqs(args):
         result.fromstring(str(mongo_ret['num']))
         return list(result)
 
-@AW_STR_LIST
+@AW_STR_SET
 def nickqqs_ex(args):
     result = {}
     if not args or not isinstance(args, (list, set)):
@@ -95,7 +105,7 @@ def quninfo(args):
         result['CreateDate'] = str(result['CreateDate'])
         return result
 
-@AW_INT_LIST
+@AW_INT_SET
 def quninfo_ex(args):
     result = {}
     if not args or not isinstance(args, (list, set)):
@@ -138,7 +148,7 @@ def qunmembers(args):
             item['Index'] = index + 1
         return result
 
-@AW_INT_LIST
+@AW_INT_SET
 def qunmembers_ex(args):
     result = {}
     if not args or not isinstance(args, (list, set)):
@@ -168,7 +178,7 @@ def qqinfo(args):
         item.update(quninfo_dict.get(item['QunNum'], {}))
     return result
 
-@AW_INT_LIST
+@AW_INT_SET
 def qqinfo_ex(args):
     result = {}
     if not args or not isinstance(args, (list, set)):
