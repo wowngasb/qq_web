@@ -41,9 +41,9 @@ $var title:QQ号码信息
             }
         },
         searchQqChange: function(event) {
-            if(parseInt(event.target.value)){
+            if(parseInt(event.target.value) || event.target.value==''){
                 this.setState({
-                    qq: parseInt(event.target.value)
+                    qq: event.target.value
                 })
             }
         },

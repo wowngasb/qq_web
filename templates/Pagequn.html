@@ -53,9 +53,9 @@ $var title:QQ群成员信息
             }
         },
         searchQunChange: function(event) {
-            if(parseInt(event.target.value)){
+            if(parseInt(event.target.value) || event.target.value==''){
                 this.setState({
-                    qun: parseInt(event.target.value)
+                    qun: event.target.value
                 })
             }
         },
