@@ -1,6 +1,14 @@
 $def with(input, json_data)
 $var title:QQ昵称查找
 <div class="body" id="react-app"></div>
+<style>
+.qq-list-div{
+    clear: both;
+    flex-wrap: wrap;
+    display: -webkit-flex; /* Safari */
+    display: flex;
+}
+</style>
 <script type="text/javascript">
 	var _QQ_NICK = "$:(input)";
 	var _NICK_INFO = $:(json_data);
@@ -37,13 +45,15 @@ $var title:QQ昵称查找
                         </span>
                         <button style={{width: 20 + 'px', height: 20 + 'px', marginLeft: 10 + 'px'}} onClick={this.toggleQqList}>{this.state.text}</button>
                     </div>
-                    <div style={{wordBreak: 'break-word', display: this.state.display}}>{
-                        this.props.qq_list.map(function(item) {
-                            return (
-                                <span key={item}><a style={{marginRight: 10 + 'px'}} href={'/qq/' + item + '.html'}>{item}</a></span>
-                            )
-                        })
-                    }</div>
+                    <div style={{display: this.state.display}}>
+                        <div className="qq-list-div" >{
+                            this.props.qq_list.map(function(item) {
+                                return (
+                                    <span key={item}><a style={{marginRight: 10 + 'px'}} href={'/qq/' + item + '.html'}>{item}</a></span>
+                                )
+                            })
+                        }</div>
+                    </div>
                 </div>
             )
         }
@@ -190,7 +200,7 @@ $var title:QQ昵称查找
                                 })
                             }
                         }).bind(this)
-                    });
+                    }); 
                 }
             }.bind(this), 1000)
         },
