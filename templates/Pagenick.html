@@ -1,5 +1,5 @@
 $def with(input, json_data)
-$var title:QQ昵称查找
+$var title:QQ昵称查找 - $:(input)
 <div class="body" id="react-app"></div>
 <style>
 .qq-list-div{
@@ -28,14 +28,12 @@ $var title:QQ昵称查找
     var NickInfo = React.createClass({
         getInitialState: function() {
             return {
-                text: '+',
-                display: "none"
+                list_display: false
             }
         },
         toggleQqList: function() {
             this.setState({
-                text: this.state.text == '+' ? '-' : '+',
-                display: this.state.display == 'none' ? "block" : "none"
+                list_display: !this.state.list_display
             })
         },
         toggleStopLoad: function() {
@@ -47,16 +45,20 @@ $var title:QQ昵称查找
                     <div className="group-members">
                         <span> 信息条数 : {this.props.qq_list.length}
                         </span>
-                        <button style={{width: 20 + 'px', height: 20 + 'px', marginLeft: 10 + 'px'}} onClick={this.toggleQqList}>{this.state.text}</button>
-                        <button style={{width: 45 + 'px', height: 20 + 'px', marginLeft: 10 + 'px'}} onClick={this.toggleStopLoad}>{ this.props.stop_load ? 'Load' : 'Off'}</button>
+                        <button style={{width: 20 + 'px', height: 20 + 'px', marginLeft: 10 + 'px'}} onClick={this.toggleQqList}>{this.state.list_display ? '-' : '+'}</button>
+                        <button style={{width: 45 + 'px', height: 20 + 'px', marginLeft: 10 + 'px', display: this.props.stop_load=='off' ? 'none' : 'inline-block'}} onClick={this.toggleStopLoad}>{ this.props.stop_load == 'stop' ? 'Load' : '...'}</button>
                     </div>
-                    <div style={{display: this.state.display}}>
+                    <div style={{display: this.state.list_display ? "block" : "none"}}>
                         <div className="qq-list-div" >{
-                            this.props.qq_list.map(function(item) {
+                            this.props.qq_list.map((function(item) {
                                 return (
-                                    <span key={item}><a style={{marginRight: 10 + 'px'}} href={'/qq/' + item + '.html'}>{item}</a></span>
+                                    <span key={item}>
+                                        <a style={{marginRight: 10 + 'px', color: (item in this.props.qun_list) ? 'green' : 'red'}} href={'/qq/' + item + '.html'}>
+                                            {item}
+                                        </a>
+                                    </span>
                                 )
-                            })
+                            }).bind(this))
                         }</div>
                     </div>
                 </div>
@@ -96,7 +98,7 @@ $var title:QQ昵称查找
         render: function() {
             return (
                 <div className="group-tools">
-                    <NickInfo stop_load={this.props.stop_load} changeStopLoad={this.props.changeStopLoad} qq_list={this.props.qq_list}/>
+                    <NickInfo qun_list={this.props.qun_list} stop_load={this.props.stop_load} changeStopLoad={this.props.changeStopLoad} qq_list={this.props.qq_list}/>
                     <NickSearch />
                 </div>
             )
@@ -136,7 +138,7 @@ $var title:QQ昵称查找
                                     <tr key={item["QunNum"]}>
                                         <td className="td-no"><a href={'/qun/' + item["QunNum"] + '.html'} >{item["QunNum"]}</a></td>
                                         <td className="td-no">
-                                            <p><strong>{item["Title"]}</strong> ({item["CreateDate"]})</p>
+                                            <p><strong>{item["Title"]}</strong> {item["CreateDate"] ? ('(' + item["CreateDate"] + ')') : ''}</p>
                                             <span style={{lineHeight: 15 + 'px'}}>{item["QunText"]}</span>
                                         </td>
                                         <td className="td-user-nick"><span>{item["Nick"]}</span></td>
@@ -160,8 +162,8 @@ $var title:QQ昵称查找
         render:function(){
             return (
                 <dl className="group-memeber">{
-                    Object.keys(this.props.allmembers).sort().map((function(key) {
-                        var item = this.props.allmembers[ key ]
+                    Object.keys(this.props.qun_list).sort(function(a, b) {return parseInt(a)>parseInt(b)?1:-1}).map((function(key) {
+                        var item = this.props.qun_list[ key ]
                         return (
                             <div key={key}>
                                 <NickQunList members={typeof(item.length)!='undefined' ? item : []}/>
@@ -175,34 +177,45 @@ $var title:QQ昵称查找
 
     var App = React.createClass({
         getInitialState: function() {
+            var qun_list = this.props.info['QunList'] ? this.props.info['QunList'] : {};
+            var diff_list = this.getDiffList(this.props.info['Qqlist'], qun_list)
             return {
-                qun_list: this.props.info['QunList'] ? this.props.info['QunList'] : {},
-                stop_load: true
+                qun_list: qun_list,
+                stop_load: diff_list.length <= 0 ? 'off' : 'stop'
             }
         },
         changeStopLoad: function(stop_load) {
-            this.setState({
-                stop_load: !this.state.stop_load
-            })
+            if(this.state.stop_load != 'off'){
+                this.setState({
+                    stop_load: this.state.stop_load == 'stop' ? 'start' : 'stop'
+                })
+            }
+        },
+        getDiffList: function(Qqlist, qun_list) {
+            var all_len = Qqlist ? Qqlist.length : 0;
+            var diff_list = [];
+            for(var i=0; i<all_len; i++){
+                var num = Qqlist[i];
+                if(!(num in qun_list)){
+                    diff_list.push(num)
+                }
+            }
+            return diff_list;
         },
         componentDidMount: function () {
-            this.timer = setInterval(function () {
-                if(this.state.stop_load){
+            this.timer = this.state.stop_load == 'off' ? null : setInterval(function () {
+                if(this.state.stop_load != 'start'){
                     return
                 }
-                var all_len = this.props.info['Qqlist'] ? this.props.info['Qqlist'].length : 0;
-                var diff_list = [];
-                for(var i=0; i<all_len; i++){
-                    var num = this.props.info['Qqlist'][i];
-                    if(!(num in this.state.qun_list)){
-                        diff_list.push(num)
-                    }
-                }
+                var diff_list = this.getDiffList(this.props.info['Qqlist'], this.state.qun_list);
                 if(diff_list.length <= 0){
                     clearInterval(this.timer);
+                    this.setState({
+                        stop_load: 'off'
+                    })
                 } else {
                     var rand_num = diff_list.choice();
-                    ajax( {  
+                    ajax( {
                         url: '/api?func=qqinfo&args=' + rand_num,
                         dataType: "json",
                         success: (function(data) {  
@@ -225,8 +238,8 @@ $var title:QQ昵称查找
                         <NickTitle nick={this.props.nick} />
                     </dt>
                     <dd>
-                        <NickGroupTools stop_load={this.state.stop_load} changeStopLoad={this.changeStopLoad} qq_list={this.props.info['Qqlist'] ? this.props.info['Qqlist'] : []} />
-                        <AllMembersList allmembers={this.state.qun_list}/>
+                        <NickGroupTools qun_list={this.state.qun_list} stop_load={this.state.stop_load} changeStopLoad={this.changeStopLoad} qq_list={this.props.info['Qqlist'] ? this.props.info['Qqlist'] : []} />
+                        <AllMembersList qun_list={this.state.qun_list}/>
                     </dd>
                 </dl>
             )

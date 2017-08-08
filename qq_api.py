@@ -11,6 +11,7 @@
 #-------------------------------------------------------------------------------
 import array
 import inspect
+import binascii
 from api_tool import api_wrapper, FNVHash
 from qq_config import config
 
@@ -27,7 +28,7 @@ def _md5(src):
 _hash_int_list = lambda l: _md5(','.join(['%d' % (d, ) for d in sorted(list(l))]))
 _hash_str_list = lambda l: _md5(','.join([s for s in sorted(list(l))]))
 
-SQL_IN_BLOCK_MAX_ITEM = 20
+SQL_IN_BLOCK_MAX_ITEM = 200
 CACHE_ITEM_NUM = 100000
 AW_NONE = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:''), lambda args_str, web_input: None )
 AW_INT = api_wrapper( (CACHE_ITEM_NUM, lambda argsl, kwds:argsl[0] if argsl else 0), lambda args_str, web_input: int(args_str) if args_str.isdigit() else None )
@@ -73,6 +74,34 @@ def nickqqs(args):
     if not args or not isinstance(args, unicode):
         return result
     unicode_nick = args
+    htag = (binascii.crc32(unicode_nick.encode('utf-8')) & 0xffffffff) % 8
+    db_tag = 'qqnick_crc32_%d' % (htag, )
+    con_tag = 'crc32_%d' % (htag, )
+    cur = MONGO_CONN[db_tag][con_tag]
+    mongo_ret = cur.find_one({'n':unicode_nick})
+    if not mongo_ret:
+        return result
+    else:
+        result = array.array('L')
+        result.fromstring(str(mongo_ret['d']))
+        return list(result)
+
+@AW_STR_SET
+def nickqqs_ex(args):
+    result = {}
+    if not args or not isinstance(args, (list, set)):
+        return result
+    unicode_nick_set = set(args)
+    result = {unicode_nick:nickqqs(unicode_nick) for unicode_nick in unicode_nick_set}
+    return result
+
+@AW_STR
+def nickzqqs(args):
+    """get qq_num_list of the nick."""
+    result = []
+    if not args or not isinstance(args, unicode):
+        return result
+    unicode_nick = args
     db_tag = 'qqnick%d_%d' % (len(unicode_nick), FNVHash(unicode_nick)%4)
     cur = MONGO_CONN[db_tag][db_tag]
     mongo_ret = cur.find_one({'nick':unicode_nick})
@@ -84,12 +113,12 @@ def nickqqs(args):
         return list(result)
 
 @AW_STR_SET
-def nickqqs_ex(args):
+def nickzqqs_ex(args):
     result = {}
     if not args or not isinstance(args, (list, set)):
         return result
     unicode_nick_set = set(args)
-    result = {unicode_nick:nickqqs(unicode_nick) for unicode_nick in unicode_nick_set}
+    result = {unicode_nick:nickzqqs(unicode_nick) for unicode_nick in unicode_nick_set}
     return result
 
 @AW_INT
@@ -116,7 +145,7 @@ def quninfo_ex(args):
         QunNum_set = list(QunNum_set)
         while QunNum_set:
             result.update( quninfo_ex(QunNum_set[:SQL_IN_BLOCK_MAX_ITEM]) )
-            QunNum_set = []#QunNum_set[SQL_IN_BLOCK_MAX_ITEM:]
+            QunNum_set = QunNum_set[SQL_IN_BLOCK_MAX_ITEM:]
         return result
 
     mysql_ret = MYSQL_DB.select('QUNinfo.qunlist', where='QunNum in (%s)' % (','.join([str(QunNum) for QunNum in QunNum_set]),), vars={})
@@ -189,7 +218,7 @@ def qqinfo_ex(args):
         QQNum_set = list(QQNum_set)
         while QQNum_set:
             result.update( qqinfo_ex(QQNum_set[:SQL_IN_BLOCK_MAX_ITEM]) )
-            QQNum_set = []#QQNum_set[SQL_IN_BLOCK_MAX_ITEM:]
+            QQNum_set = QQNum_set[SQL_IN_BLOCK_MAX_ITEM:]
         return result
 
     ret_list = []
@@ -210,7 +239,7 @@ def qqinfo_ex(args):
 
     qun_list = []
     for _, info in result.items():
-        qun_list.extend([item['QunNum'] for item in info if 'QunNum' in item and item['QunNum']>0])
+        qun_list.extend([item['QunNum'] for item in info if 'QunNum' in item])
     quninfo_dict = quninfo_ex(set(qun_list))
     for _, info in result.items():
         for item in info:

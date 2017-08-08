@@ -63,7 +63,7 @@ class Pagenick:
             _qq_list = set(API.nickqqs(_nick))
             qq_list = _qq_list if not qq_list else qq_list.intersection(_qq_list)
 
-        qqinfo_dict = API.qqinfo_ex(qq_list)
+        qqinfo_dict = API.qqinfo_ex(list(qq_list)[:20])
         nick_info = {
             'Qqlist': list(qq_list),
             'QunList': dict(qqinfo_dict),
