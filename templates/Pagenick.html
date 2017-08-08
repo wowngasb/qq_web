@@ -38,6 +38,9 @@ $var title:QQ昵称查找
                 display: this.state.display == 'none' ? "block" : "none"
             })
         },
+        toggleStopLoad: function() {
+            this.props.changeStopLoad()
+        },
         render: function() {
             return (
                 <div>
@@ -45,6 +48,7 @@ $var title:QQ昵称查找
                         <span> 信息条数 : {this.props.qq_list.length}
                         </span>
                         <button style={{width: 20 + 'px', height: 20 + 'px', marginLeft: 10 + 'px'}} onClick={this.toggleQqList}>{this.state.text}</button>
+                        <button style={{width: 45 + 'px', height: 20 + 'px', marginLeft: 10 + 'px'}} onClick={this.toggleStopLoad}>{ this.props.stop_load ? 'Load' : 'Off'}</button>
                     </div>
                     <div style={{display: this.state.display}}>
                         <div className="qq-list-div" >{
@@ -92,7 +96,7 @@ $var title:QQ昵称查找
         render: function() {
             return (
                 <div className="group-tools">
-                    <NickInfo  qq_list={this.props.qq_list}/>
+                    <NickInfo stop_load={this.props.stop_load} changeStopLoad={this.props.changeStopLoad} qq_list={this.props.qq_list}/>
                     <NickSearch />
                 </div>
             )
@@ -172,11 +176,20 @@ $var title:QQ昵称查找
     var App = React.createClass({
         getInitialState: function() {
             return {
-                qun_list: this.props.info['QunList'] ? this.props.info['QunList'] : {}
+                qun_list: this.props.info['QunList'] ? this.props.info['QunList'] : {},
+                stop_load: true
             }
+        },
+        changeStopLoad: function(stop_load) {
+            this.setState({
+                stop_load: !this.state.stop_load
+            })
         },
         componentDidMount: function () {
             this.timer = setInterval(function () {
+                if(this.state.stop_load){
+                    return
+                }
                 var all_len = this.props.info['Qqlist'] ? this.props.info['Qqlist'].length : 0;
                 var diff_list = [];
                 for(var i=0; i<all_len; i++){
@@ -212,7 +225,7 @@ $var title:QQ昵称查找
                         <NickTitle nick={this.props.nick} />
                     </dt>
                     <dd>
-                        <NickGroupTools qq_list={this.props.info['Qqlist'] ? this.props.info['Qqlist'] : []} />
+                        <NickGroupTools stop_load={this.state.stop_load} changeStopLoad={this.changeStopLoad} qq_list={this.props.info['Qqlist'] ? this.props.info['Qqlist'] : []} />
                         <AllMembersList allmembers={this.state.qun_list}/>
                     </dd>
                 </dl>

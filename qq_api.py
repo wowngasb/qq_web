@@ -73,7 +73,8 @@ def nickqqs(args):
     if not args or not isinstance(args, unicode):
         return result
     unicode_nick = args
-    cur = MONGO_CONN['qqnick%d_%d' % (len(unicode_nick), FNVHash(unicode_nick)%4)]['qqnick']
+    db_tag = 'qqnick%d_%d' % (len(unicode_nick), FNVHash(unicode_nick)%4)
+    cur = MONGO_CONN[db_tag][db_tag]
     mongo_ret = cur.find_one({'nick':unicode_nick})
     if not mongo_ret:
         return result
